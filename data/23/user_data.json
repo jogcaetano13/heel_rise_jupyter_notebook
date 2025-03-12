@@ -1,0 +1,9 @@
+{
+    "user_id": 23,
+    "age": 46,
+    "weight_kg": 50,
+    "height_cm": 152,
+    "gender": "Female",
+    "phone_location": "Leg",
+    "high_height_cm": 10.0
+}
