@@ -2,6 +2,7 @@ import math
 import statistics as st
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from scipy.signal import butter, filtfilt
 
 mpl.rcParams.update(mpl.rcParamsDefault)
 
@@ -74,13 +75,20 @@ def RoundFloat(List):
 
     return List
 
+def butter_lowpass_filter(data, cutoff, fs, order=4):
+    nyquist = 0.5 * fs
+    normal_cutoff = cutoff / nyquist
+    b, a = butter(order, normal_cutoff, btype='low', analog=False)
+    y = filtfilt(b, a, data)
+    return y
+
 
 def accelerometer(exp_data):
     ### Acelerometer
 
     Acelerometer_data = exp_data['accelerometer']
 
-    Meter_Time = [data[0] for data in Acelerometer_data]
+    Meter_Time = [data[0] for data in Acelerometer_data];
     Exp_Acceleration = [data[1] for data in Acelerometer_data]
 
     # Time variables
@@ -104,14 +112,14 @@ def accelerometer(exp_data):
     Position = Euler(Time_Interv, Velocity)
 
     # Filter the first ten seconds
-    Experiment_Tt_Time = (Meter_Time[-1] - Meter_Time[0]) * 1.0e-3
-    if Experiment_Tt_Time > 10.0:
-        Meter_Time = [Instant for Instant in Meter_Time if ((Instant - Meter_Time[0]) * 1.0e-3) > 10.0]
-        First_Ten_Sec = len(Exp_Acceleration) - len(Meter_Time)
-        Experiment_Time[:First_Ten_Sec] = []
-        Corrected_Accel[:First_Ten_Sec] = []
-        Velocity[:First_Ten_Sec] = []
-        Position[:First_Ten_Sec] = []
+    # Experiment_Tt_Time = (Meter_Time[-1] - Meter_Time[0]) * 1.0e-3
+    # if Experiment_Tt_Time > 10.0:
+    #     Meter_Time = [Instant for Instant in Meter_Time if ((Instant - Meter_Time[0]) * 1.0e-3) > 10.0]
+    #     First_Ten_Sec = len(Exp_Acceleration) - len(Meter_Time)
+    #     Experiment_Time[:First_Ten_Sec] = []
+    #     Corrected_Accel[:First_Ten_Sec] = []
+    #     Velocity[:First_Ten_Sec] = []
+    #     Position[:First_Ten_Sec] = []
 
     Corrected_Accel_Int = [vect_length(line) for line in Corrected_Accel]
 
@@ -146,12 +154,12 @@ def accelerometer(exp_data):
     axs[0].scatter([Experiment_Time[j] for j in [Peeks_Loc[0], Peeks_Loc[-1]]],
                    [Corrected_Accel_Int[j] for j in [Peeks_Loc[0], Peeks_Loc[-1]]], color='red')
 
-    # Acceleration = [vect_length(line) for line in Corrected_Accel]
-    Speed = [vect_length(line) for line in Velocity[Peeks_Loc[0]:Peeks_Loc[-1] + 1]]
+    Acceleration = [vect_length(line) for line in Corrected_Accel]
+    # Speed = [vect_length(line) for line in Velocity[Peeks_Loc[0]:Peeks_Loc[-1] + 1]]
 
-    axs[1].plot(Experiment_Time[Peeks_Loc[0]:Peeks_Loc[-1] + 1], Speed)
+    axs[1].plot(Experiment_Time[Peeks_Loc[0]:Peeks_Loc[-1] + 1], Acceleration)
 
-    plt.show()
+    # plt.show()
 
     # fig, axs = plt.subplots(3,1,figsize=(16,24), gridspec_kw={'height_ratios': [1, 1, 1]})
 
@@ -175,4 +183,4 @@ def accelerometer(exp_data):
 
     # plt.show()
 
-    return 0
+    return Position
