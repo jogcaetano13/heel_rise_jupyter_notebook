@@ -121,7 +121,11 @@ def prepare_accelerometer_data(exp_data):
         for comp, grav in zip(Converted_Accel, Orient)
     ]
 
-    fs  = 1 / Time_Interv[1]
+    # Find first non-zero interval to avoid ZeroDivisionError
+    first_nonzero = next((t for t in Time_Interv if t > 0), None)
+    if first_nonzero is None:
+        raise ValueError("All time intervals are zero — check the accelerometer data for this sample.")
+    fs  = 1 / first_nonzero
     flt = [butter_lowpass_filter([a[i] for a in Corrected_Accel], cutoff, fs) for i in range(3)]
     Corrected_Accel = [[flt[0][i], flt[1][i], flt[2][i]] for i in range(len(flt[0]))]
 
