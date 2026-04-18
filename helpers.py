@@ -1,7 +1,7 @@
 import math
 import statistics as st
 import matplotlib.pyplot as plt
-from scipy.signal import butter, filtfilt
+from scipy.signal import butter, filtfilt, find_peaks
 
 # ─────────────────────────────────────────────
 # CONSTANTS
@@ -139,23 +139,28 @@ def prepare_accelerometer_data(exp_data):
     }
 
 
-def detect_peaks(accel_data):
+def detect_peaks(accel_data, min_rep_time=0.5, min_prominence=0.01):
     """
     Detects peaks (repetitions) from the filtered acceleration magnitude.
+    Uses prominence instead of absolute height so that low-amplitude but
+    rhythmic signals (small heel rises) are not discarded.
     Input:
-        accel_data - dict returned by prepare_accelerometer_data()
+        accel_data      - dict returned by prepare_accelerometer_data()
+        min_rep_time    - minimum time in seconds between repetitions (default 0.5s)
+        min_prominence  - minimum peak prominence in m/s² (default 0.01)
     Returns:
-        list of peak indices (Peeks_Loc)
+        list of peak indices
     """
-    mag = accel_data['accel_magnitude']
-    threshold = st.fmean(mag) + st.stdev(mag) / 3
+    mag             = accel_data['accel_magnitude']
+    experiment_time = accel_data['experiment_time']
 
-    return [
-        t for t in range(1, len(mag) - 1)
-        if ((mag[t] - mag[t-1]) > 0) and
-           ((mag[t+1] - mag[t]) < 0) and
-           (mag[t] > threshold)
-    ]
+    # Average fs — robust to irregular timestamps
+    total_time   = experiment_time[-1] if len(experiment_time) > 1 else 1.0
+    fs           = (len(mag) - 1) / total_time if total_time > 0 else 100.0
+    min_distance = max(1, int(min_rep_time * fs))
+
+    peaks, _ = find_peaks(mag, prominence=min_prominence, distance=min_distance)
+    return list(peaks)
 
 
 def compute_step_metrics(accel_data, peaks):
